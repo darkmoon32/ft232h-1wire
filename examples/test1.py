@@ -17,7 +17,7 @@ pin   = 8  # pin c0
 overdrive = False
 
 # Open and initialise the FT232h for 1-Wire
-print "TEST 1: Perform Rom Search..."
+print("TEST 1: Perform Rom Search...")
 w1 = W1ftdi(pin, debug, overdrive)
 w1.open()
 w1.sync()
@@ -31,7 +31,7 @@ w1.setup_clock()
 # Search for devices on the 1-Wire bus
 if w1.reset():
     roms = w1.search_roms()
-    print "Found roms: {}".format(roms)
+    print(("Found roms: {}".format(roms)))
 w1.close()
-print "TEST 1: Complete"
+print("TEST 1: Complete")
 

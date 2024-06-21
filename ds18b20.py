@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # 1-wire over FT232H
-# DS18B20 Temp Sensor 
+# DS18B20 Temp Sensor
 #
 # 1-wire specs
 # https://www.maximintegrated.com/en/app-notes/index.mvp/id/126
@@ -28,8 +28,8 @@ class Ds18b20(W1ftdi):
         self.sync()
         self.setup_clock()
         self.res = { 3: "12 bit", 2: "11 bit", 1: "10 bit", 0: "9 bit" }
-        
-    # Read Temperature 
+
+    # Read Temperature
     def get_temp(self):
 
         # Reset the line, bail if no devices
@@ -53,7 +53,7 @@ class Ds18b20(W1ftdi):
         data = self.read_bytes(9)
 
         # Check the CRC on the data:
-        if self.crc(data) is not 0x00:
+        if self.crc(data) != 0x00:
             self._debug(1, "TEMP: CRC Check Failed")
             raise Exception("CRC Check Failed")
 
@@ -63,14 +63,14 @@ class Ds18b20(W1ftdi):
         if resolution == 3:
             temperature = float(temp_register) / 16.0
         elif resolution == 2:
-            temperature = float(temp_register >> 1) / 8.0 
+            temperature = float(temp_register >> 1) / 8.0
         elif resolution == 1:
-            temperature = float(temp_register >> 2) / 4.0 
+            temperature = float(temp_register >> 2) / 4.0
         elif resolution == 0:
-            temperature = float(temp_register >> 3) / 2.0 
+            temperature = float(temp_register >> 3) / 2.0
         else:
             raise Exception("Unknown Resolution")
         self._debug(1, "TEMP: Resolution: {}".format(self.res[resolution]))
         self._debug(1, "TEMP: Data: {}".format( self.bytes2string(data)))
         return temperature
-        
+

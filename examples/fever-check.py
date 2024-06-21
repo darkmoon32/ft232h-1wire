@@ -71,7 +71,7 @@ led.set_digit_raw(2, ALPHA_VALUES["A"])
 led.set_digit_raw(3, ALPHA_VALUES["D"])
 led.write_display()
 
-settled = [ i for i in xrange(temp_settled) ]
+settled = [ i for i in range(temp_settled) ]
 counter = 0
 while len(set(settled)) != 1:
 
@@ -108,7 +108,7 @@ while len(set(settled)) != 1:
     else:
         raise Exception("Unknown Resolution")
 
-    print "Temperature: {:.2f}C".format(temperature)
+    print(("Temperature: {:.2f}C".format(temperature)))
     led.clear()
     led.print_float(temperature, decimal_digits=2)
     led.write_display()
@@ -123,8 +123,8 @@ while len(set(settled)) != 1:
 
 if settled[0] > (temp_target-temp_range) and settled[0] < (temp_target+temp_range):
     owm.set_pin(green_pin, GPIO.OUT, GPIO.HIGH)
-    print "The child seems fine"
+    print("The child seems fine")
 else:
     owm.set_pin(red_pin, GPIO.OUT, GPIO.HIGH)
-    print "Call the doctor!"
+    print("Call the doctor!")
 

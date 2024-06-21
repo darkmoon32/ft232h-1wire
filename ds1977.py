@@ -154,7 +154,7 @@ class Ds1977(W1ftdi):
             page_offset = ((ta2<<8)+ta1) % (self._page_length + 1)
             length = self._page_length - page_offset
             responses = []
-            for i in xrange(pages):
+            for i in range(pages):
                 self.enable_command_buffer()
                 response = chr( self.pullup_and_check(5) )
                 response += self.read_bytes(length)

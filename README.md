@@ -2,7 +2,7 @@
 
 Implementation of 1-wire using the Adafruit FT232H Breakout board.
 
-GPIO seems to function significanlty better on the second MPSSE (ACBUS) on my board. 
+GPIO seems to function significanlty better on the second MPSSE (ACBUS) on my board.
 If you have problems using the D4-D7 pins, then try using C0-C7
 
 See Also: [Adafruit GPIO fork with 1-Wire Support](https://github.com/TuxInvader/Adafruit_Python_GPIO)
@@ -29,7 +29,7 @@ Created using hints and examples from Adafruits GPIO library, and Neenars PyDigi
 
  * [Maxim DS18B20](http://datasheets.maximintegrated.com/en/ds/DS18B20.pdf)
 
-### iButton 
+### iButton
 
  * [Maxim iButton (DS1977)](https://datasheets.maximintegrated.com/en/ds/DS1977.pdf)
 
@@ -46,24 +46,36 @@ Created using hints and examples from Adafruits GPIO library, and Neenars PyDigi
 
 You will need to provide a pull-up resistor on the GPIO line which you want to use for 1-Wire. This will provide power in parasite mode power mode. I use a 4k7 pull up to the 5v line on the FT232h. See Image below:
 
-![FT232H Wiring](https://raw.githubusercontent.com/TuxInvader/ft232h-1wire/master/resources/wiring.jpg "FT232H wiring")
-![FT232H Diagram](https://raw.githubusercontent.com/TuxInvader/ft232h-1wire/master/resources/ft232h-1wire.png "FT232H wiring Diagram")
+![FT232H Wiring](resources/wiring.jpg "FT232H wiring")
+![FT232H Diagram](resources/ft232h-1wire.png "FT232H wiring Diagram")
+
+The pin number is mapped to the table 3.10 in [FT232 datasheet](https://ftdichip.com/wp-content/uploads/2020/07/DS_FT232H.pdf). The label on the board is then taken from **FT232H Pin Descriptions** from the same document. For example pin *GPIOL3* has pin number *20* and it's name is *ADBUS7*. From this the *AD7* name is created.
+
+## Requirements
+
+```
+sudo apt install python3-ftdi1
+pip install ctypes-ftdi1
+export PYTHONPATH=$PWD
+```
 
 ## Examples
 
-See test files in examples folder for usage. 
+See test files in examples folder for usage.
 
 The w1ftdi class contains lots of debugging information, so you can get a full breakdown of the 1-wire and MPSSE commands used. Set the debug to level 5 to get the most verbose output.
 
  * examples/test1.py
    - Performs a search of the 1-wire bus and reports the devices found.
+   - Uses C0 pin to communicate
 
  * examples/test2.py
    - Performs a search of the 1-wire bus and then reads the temperature from any DS18B20 devices present.
+   - Uses C0 pin to communicate
 
  * examples/fever-checker.py
    - Uses a modified Adafruit_GPIO library to talk to a DS18B20 over 1-wire, and control some LEDs with standard GPIO, and update an I2C Seven Segment display with the temperature reading. See the wiring diagram:
 
-  ![Fever-Check Diagram](https://raw.githubusercontent.com/TuxInvader/ft232h-1wire/master/resources/fever-check-diagram.png)
+  ![Fever-Check Diagram](resources/fever-check-diagram.png)
 
-   
+

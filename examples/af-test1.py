@@ -22,7 +22,7 @@ FT232H.use_FT232H()
 ft232h = FT232H.FT232H()
  
 # Open and initialise the FT232h for 1-Wire
-print "TEST 1: Perform Rom Search..."
+print("TEST 1: Perform Rom Search...")
 owm = FT232H.OneWireMaster(ft232h, one_wire_pin)
 
 # set some arbitrary GPIO states, and write them.
@@ -32,8 +32,8 @@ owm.set_pin(7, True, False)
 # Search for devices on the 1-Wire bus
 if owm.reset():
     roms = owm.search_roms()
-    print "Found roms: {}".format(roms)
-print "TEST 1: Complete"
+    print(("Found roms: {}".format(roms)))
+print("TEST 1: Complete")
 
 # Close FTDI
 ft232h.close()

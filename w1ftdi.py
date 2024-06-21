@@ -44,14 +44,14 @@ class W1ftdi(object):
         self._reset_clocks(False)
 
         # Two ways to delay. dump a byte to tms, or pulse the clock for n
-        # bits. A 1 bit pulse seems to take the same as time as a 8bit 
+        # bits. A 1 bit pulse seems to take the same as time as a 8bit
         # dump to TMS? Default is to pulse the clock.
-        self.tms_dump    = '\x4a\x01\xff'  # Dump 8 bits to TMS
-        self.pb          = '\x8e\x01'      # Pulse clock (1 bits) 
+        self.tms_dump    = b'\x4a\x01\xff'  # Dump 8 bits to TMS
+        self.pb          = b'\x8e\x01'      # Pulse clock (1 bits)
         self.delay       = self.pb
 
         # MPSSE Command to read GPIO
-        self.read_gpio   = '\x81\x83'
+        self.read_gpio   = b'\x81\x83'
 
         # If we have a pullup pin, set it to low by default, this pin controls
         # switching on a strong_pullup if the device needs extra power. It is
@@ -72,7 +72,7 @@ class W1ftdi(object):
     # Debug function
     def _debug(self, level, msg):
         if self._dbg >= level:
-            print "DEBUG {} {:.9f}, {}".format(level, time.time(), msg)
+            print(("DEBUG {} {:.9f}, {}".format(level, time.time(), msg)))
 
     # Remove the kernels FTDI Serial modules
     def _rmmod(self):
@@ -143,19 +143,18 @@ class W1ftdi(object):
                 self._max_buffer = len(self._output)
             self._write(self._output)
             self._output = None
-        
+
     # Write data to the FTDI MPSSE engine
     def _write(self, string):
-        length = len(string)
         if self._buffer:
             if self._output is None:
                 self._output = string
             else:
                 self._output += string
-            self._debug(5, "MPSSE: Buffering: " + "".join("{:02x}".format(ord(c)) for c in self._output))
+            self._debug(5, "MPSSE: Buffering: " + "".join("{:02x}".format(c) for c in self._output))
             return
-        self._debug(5, "MPSSE: Write: " + "".join("{:02x}".format(ord(c)) for c in string))
-        ftdi.write_data(self._ctx, string, length)
+        self._debug(5, "MPSSE: Write: " + "".join("{:02x}".format(c) for c in string))
+        ftdi.write_data(self._ctx, string)
 
     # Read data from the FTDI MPSSE engine
     def _read(self, length, timeout=5):
@@ -215,11 +214,11 @@ class W1ftdi(object):
         self._debug(3, "MPSSE: Sync")
         retries = 10
         tries = 0
-        self._write('\xAB')
+        self._write(b'\xAB')
         sync = False
         while not sync:
             data = self._read(2)
-            if data == '\xFA\xAB':
+            if data == b'\xFA\xAB':
                 sync = True
             tries += 1
             if tries >= retries:
@@ -228,11 +227,11 @@ class W1ftdi(object):
     # Set up the clock to be consistent, and to use the full 60Mhz
     def setup_clock(self):
         self._debug(3, "MPSSE: Setup Clock")
-        commands = bytearray((
+        commands = bytes([
             0x8a,   # turn off clock divide by 5.
             0x97,   # turn off adaptive clocking
-            0x8d))  # turn off 3-phase clocking
-        self._write(str(commands))
+            0x8d])  # turn off 3-phase clocking
+        self._write(commands)
 
     # Read the GPIO state from the MPSSE Directly
     def read_gpio_state(self):
@@ -243,19 +242,27 @@ class W1ftdi(object):
     # Get the bytes representing the current GPIO state, and return the
     # MPSSE Command needed to set them to this state
     def get_gpio_cmd(self):
-        commands = bytearray((
+        # commands = bytes([
+        #     0x80,                                # write low bytes
+        #     chr(self._level & 0xFF),             # Low Level
+        #     chr(self._direction & 0xFF),         # Low Direction
+        #     0x82,                                # Read high bytes
+        #     chr((self._level >> 8) & 0xFF),      # High Level
+        #     chr((self._direction >> 8) & 0xFF)]) # High Direction
+        commands = bytes([
             0x80,                                # write low bytes
-            chr(self._level & 0xFF),             # Low Level
-            chr(self._direction & 0xFF),         # Low Direction
+            self._level & 0xFF,             # Low Level
+            self._direction & 0xFF,         # Low Direction
             0x82,                                # Read high bytes
-            chr((self._level >> 8) & 0xFF),      # High Level
-            chr((self._direction >> 8) & 0xFF))) # High Direction
+            (self._level >> 8) & 0xFF,      # High Level
+            (self._direction >> 8) & 0xFF]) # High Direction
+        #commands = bytes([0x80, chr(self._level & 0xFF), chr(self._direction & 0xFF), 0x82, chr((self._level >> 8) & 0xFF), chr((self._direction >> 8) & 0xFF)])
         return commands
 
     # Write the GPIO to the MPSSE
     def write_gpio_state(self):
         self._debug(3, "MPSSE: GPIO: Writing GPIO")
-        self._write(str(self.get_gpio_cmd()))
+        self._write(self.get_gpio_cmd())
 
     # Set the GPIO to the state requested and update the self.low, self.high
     # values to take into account the changed pin.
@@ -294,9 +301,9 @@ class W1ftdi(object):
         self._debug(2, "1Wire: Reset")
         commands =  self.clock_G + self.high + self.delay + \
                     self.clock_H + self.low + self.delay + self.high + self.clock_I + self.delay + \
-                    self.read_gpio + self.clock_J + self.delay + self.read_gpio 
+                    self.read_gpio + self.clock_J + self.delay + self.read_gpio
 
-        self._write(str(commands))
+        self._write(commands)
         present = self._read(4)
 
         if present == '\xff'*4:
@@ -362,24 +369,24 @@ class W1ftdi(object):
     def write_bit(self, bit):
         self._debug(4, "1Wire: Write Bit: {}".format(bit))
         if bit:
-            commands = self.clock_A + self.low + self.delay + self.high + self.clock_B + self.delay 
+            commands = self.clock_A + self.low + self.delay + self.high + self.clock_B + self.delay
         else:
             commands = self.clock_C + self.low + self.delay + self.high + self.clock_D + self.delay
 
-        self._write(str(commands))
+        self._write(commands)
 
     def read_command(self, bits=1):
         for i in range(bits):
             commands = self.clock_A + self.low + self.delay + self.high + self.clock_E +\
                        self.delay + self.read_gpio + self.clock_F + self.delay
-            self._write(str(commands))
+            self._write(commands)
 
     def read_response(self, bits=1):
         states = []
         read = self._read(2 * bits)
         for i in range(0,2*bits,2):
             bit = bytearray([read[i], read[i+1]])
-            states.append( struct.unpack("H", str(bit))[0] >> self.pin & 01 )
+            states.append( struct.unpack("H", bit)[0] >> self.pin & 0o1 )
             self._debug(4, "1Wire: Read Bit: {:02x}{:02x} - Pin: {} is {}".format(bit[0],bit[1], self.pin, states[-1]))
         if bits == 1:
             return states.pop()
@@ -425,7 +432,7 @@ class W1ftdi(object):
         for i in range(8):
             byte |= bits[i] << i
         self._debug(3, "1Wire: Read Byte: {:02x}, Managed Buffer: {}".format(byte, manage_buffer))
-        return byte 
+        return byte
 
     # Read multiple bytes from the 1-wire bus
     def read_bytes(self, count):
@@ -440,7 +447,7 @@ class W1ftdi(object):
         for i in range(count):
             bits.append( self.read_bit() )
         return bits
-    
+
     # There is only one device on the bus, so ask it to identify itself.
     def rom_read(self):
         self._debug(3, "1Wire: Read ROM")
@@ -449,7 +456,7 @@ class W1ftdi(object):
         for i in range(8):
             rom[i] = self.read_byte()
         self._debug(1, "rom_read discovered: {}".format(self.bytes2string(rom)))
-        return rom 
+        return rom
 
     # Issue a skip rom for overdrive, we can then perform a search at OD speed, or
     # if only one device, send it a command.
@@ -501,7 +508,7 @@ class W1ftdi(object):
             roms_found.append( self.bytes2string(self._search(rom, partials)) )
         self._debug(1, "Search Complete")
         return roms_found
-        
+
     # When replaying the partial rom, flush the search out to the MPSSE every 10 bits
     # improves performance.
     def _search_flush_rom(self, count):
@@ -558,7 +565,7 @@ class W1ftdi(object):
         if self.crc(complete) is not 0x00:
             raise Exception("CRC Check Failed")
         return complete
-        
+
    # Return an a string representation of the device ROM
     def bytes2string(self, bytesarray):
         return ":".join("{:02x}".format(c) for c in bytesarray)
